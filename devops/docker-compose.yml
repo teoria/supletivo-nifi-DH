@@ -1,0 +1,83 @@
+version: '3.5'
+
+services:
+  nifi1:
+      image: apache/nifi:1.12.1
+
+      ports:
+        - "8080:8080"
+        - "10000:10000"
+        - "8082:8082"
+        - "8081:8081"
+      volumes:
+        - ./config/nifi/data:/opt/nifi/data/data
+        - ./config/nifi/script:/opt/nifi/data/script 
+        - ./config/nifi/utils:/opt/nifi/data/utils
+        - ./config/nifi/lib/ojdbc6.jar:/opt/nifi/connectors/ojdbc6.jar
+        - ./config/nifi/lib/postgresql-42.2.18.jar:/opt/nifi/connectors/postgresql-42.2.18.jar
+        - ./config/nifi/lib/nifi-nsq-nar-0.1.nar:/opt/nifi/nifi-current/lib/nifi-nsq-nar-0.1.nar 
+
+  nifi2:
+      image: apache/nifi:1.12.1
+
+      ports:
+        - "9080:8080"
+        - "9000:10000"
+        - "9082:8082"
+        - "9081:8081"
+      volumes: 
+        - ./config/nifi/lib/ojdbc6.jar:/opt/nifi/connectors/ojdbc6.jar
+        - ./config/nifi/lib/postgresql-42.2.18.jar:/opt/nifi/connectors/postgresql-42.2.18.jar
+        - ./config/nifi/lib/nifi-nsq-nar-0.1.nar:/opt/nifi/nifi-current/lib/nifi-nsq-nar-0.1.nar 
+
+
+
+  nifi-registry:
+    image: apache/nifi-registry:0.8.0
+    ports:
+      - "18080:18080"          
+    volumes: 
+      - ./config/nifi-registry/flow_storage:/opt/nifi-registry/nifi-registry-0.8.0/flow_storage
+      - ./config/nifi-registry/database/:/opt/nifi-registry/nifi-registry-0.8.0/database
+
+  mongo:
+    image: mongo:latest 
+    ports:
+     - "27017:27017"
+    volumes:
+     - ./persistence/mongo/data:/data/db:rw
+    command: --setParameter failIndexKeyTooLong=false
+
+  postgres:
+    image: postgres
+    ports:
+     - "5432:5432"
+    restart: always
+    volumes:
+     - ./persistence/postgres/data:/var/lib/postgresql/data
+    environment:
+     POSTGRES_PASSWORD: example
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+     PGADMIN_DEFAULT_EMAIL: "email@gmail.com"
+     PGADMIN_DEFAULT_PASSWORD: "senha"
+    ports:
+     - "16543:80"
+    depends_on:
+     - postgres  
+
+  metabase-app:
+    image: metabase/metabase
+    restart: always
+    ports:
+     - "3000:3000"
+    restart: always
+    volumes:
+     - ./persistence/metabase-data:/metabase-data
+
+    ports:
+      - 3001:3000
+    volumes: 
+      - ./metabase-data:/metabase-data
