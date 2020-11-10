@@ -77,7 +77,3 @@ services:
     volumes:
      - ./persistence/metabase-data:/metabase-data
 
-    ports:
-      - 3001:3000
-    volumes: 
-      - ./metabase-data:/metabase-data
